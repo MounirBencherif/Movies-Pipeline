@@ -9,7 +9,7 @@ st.set_page_config(layout="wide", page_title="Movie ROI Dashboard")
 # --- Data Loading ---
 # Define the path to the CSV file
 # This dashboard.py file is at the root, so we look inside the 'data' folder
-CSV_PATH = Path("data/processed/processed_movies.csv")
+CSV_PATH = "https://raw.githubusercontent.com/MounirBencherif/Movies-Pipeline/178671c149afd93f4bc4a2305d91c7202dd1e2c1/data/processed/processed_movies.csv"
 
 @st.cache_data
 def load_data(path):
@@ -144,4 +144,5 @@ else:
     # This message shows if the CSV file hasn't been created yet
     st.info("Waiting for data...")
     st.image("https://placehold.co/1200x400/f8f8f8/c0c0c0?text=Run+Your+Airflow+DAG+to+See+Data+Here", use_column_width=True)
+
 
