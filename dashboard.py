@@ -101,7 +101,7 @@ if df is not None and not df.empty:
             df,
             x="budget",
             y="ROI",
-            color="genres",  # Color-code by genre
+            color="title",  # Color-code by genre
             size="revenue"  # Make bigger revenue bubbles larger
         )
         st.caption("Does a bigger budget guarantee a better return? This chart helps answer that.")
@@ -164,4 +164,5 @@ else:
     # This message shows if data loading failed
     st.error("Could not load data from S3.")
     st.info("Please ensure AWS credentials are set in Streamlit Secrets and the bucket/file key are correct.")
+
 
