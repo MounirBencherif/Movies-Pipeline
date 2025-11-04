@@ -2,3 +2,5 @@
 pandas
 requests
 streamlit
+boto3
+s3fs
