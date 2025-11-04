@@ -101,7 +101,7 @@ if df is not None and not df.empty:
             df,
             x="budget",
             y="ROI",
-            color="title",  # Color-code by genre
+            color="title",  # Color-code by title
             size="revenue"  # Make bigger revenue bubbles larger
         )
         st.caption("Does a bigger budget guarantee a better return? This chart helps answer that.")
@@ -110,7 +110,6 @@ if df is not None and not df.empty:
         st.subheader("Which Genres Are Most Profitable?")
         
         try:
-            # Create a "long" dataframe by exploding the genres list
             df_genres = df.assign(genre=df['genres'].str.split(', ')).explode('genre')
             # Calculate mean ROI for each genre
             df_genre_roi = df_genres.groupby('genre')['ROI'].mean().sort_values(ascending=False)
@@ -156,7 +155,7 @@ if df is not None and not df.empty:
         
         st.divider()
 
-    # --- 4. The "Raw Data" - Full Data Table (UPDATED) ---
+    # --- 4. The "Raw Data" - Full Data Table ---
     with st.expander("Explore All Movie ROI Rankings"):
         # Select, sort, and reset index
         df_table = df[['title', 'ROI']].sort_values("ROI", ascending=False)
@@ -171,6 +170,7 @@ else:
     # This message shows if data loading failed
     st.error("Could not load data from S3.")
     st.info("Please ensure AWS credentials are set in Streamlit Secrets and the bucket/file key are correct.")
+
 
 
 
