@@ -163,7 +163,7 @@ def save_to_s3(df):
             Key=S3_FILE_KEY,
             Body=csv_buffer.getvalue()
         )
-        print(f"--- Transformation Complete: File uploaded to s3://{AWS_S3_BUCKET}/{S3_FILE_KEY} ---")
+        print(f"Transformation Complete!")
     except Exception as e:
         print(f"Error uploading to S3: {e}")
 
