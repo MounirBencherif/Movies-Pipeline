@@ -102,7 +102,7 @@ def run_extraction():
         movie_data = fetch_data_for_movie(movie_id)
         if movie_data:
             all_movie_data.append(movie_data)
-        # IMPORTANT: Respect API rate limits
+        # To Respect API rate limits
         time.sleep(0.3) 
 
     if not all_movie_data:
@@ -128,3 +128,4 @@ if __name__ == "__main__":
     print("--- Testing extraction script ---")
     run_extraction()
     print("--- End of test ---")
+
