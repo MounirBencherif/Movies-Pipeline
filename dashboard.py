@@ -1,36 +1,57 @@
 import streamlit as st
 import pandas as pd
-from pathlib import Path
+import boto3
+from io import StringIO
 
 # --- Configuration ---
-# Set the page to "wide" mode to use the full screen
 st.set_page_config(layout="wide", page_title="Movie ROI Dashboard")
 
-# --- Data Loading ---
-# Define the path to the CSV file
-# This dashboard.py file is at the root, so we look inside the 'data' folder
-CSV_PATH = "https://raw.githubusercontent.com/MounirBencherif/Movies-Pipeline/178671c149afd93f4bc4a2305d91c7202dd1e2c1/data/processed/processed_movies.csv"
+# --- AWS S3 Configuration ---
+# These will be read from Streamlit's "Secrets Management"
+AWS_ACCESS_KEY_ID = st.secrets.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = st.secrets.get("AWS_SECRET_ACCESS_KEY")
+AWS_S3_BUCKET = st.secrets.get("AWS_S3_BUCKET")
+S3_FILE_KEY = "processed_movies.csv"
 
-@st.cache_data
-def load_data(path):
+@st.cache_data(ttl=3600) # Cache the data for 1 hour
+def load_data_from_s3():
     """
-    Loads the processed CSV data.
-    Uses st.cache_data to avoid reloading on every interaction.
+    Connects to S3 using boto3 and st.secrets, then loads the CSV
+    file into a Pandas DataFrame.
     """
+    if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET]):
+        st.error("AWS credentials or bucket name not found in Streamlit Secrets.")
+        return None
+
     try:
-        df = pd.read_csv(path)
+        # Connect to S3
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+        )
+        
+        # Get the object from S3
+        response = s3_client.get_object(Bucket=AWS_S3_BUCKET, Key=S3_FILE_KEY)
+        
+        # Read the object's body into a string
+        csv_string = response.get("Body").read().decode('utf-8')
+        
+        # Read the string into a Pandas DataFrame
+        df = pd.read_csv(StringIO(csv_string))
+        
         # Convert release_date to datetime objects for better handling
         df['release_date'] = pd.to_datetime(df['release_date'])
         return df
-    except FileNotFoundError:
-        st.error(f"Error: Processed data file not found at {path}")
-        st.info("Please run the Airflow DAG 'movie_roi_pipeline' to generate the data.")
+        
+    except Exception as e:
+        st.error(f"Error loading data from S3: {e}")
         return None
 
 # Load the data
-df = load_data(CSV_PATH)
+df = load_data_from_s3()
 
-# Check if data loading was successful
+# --- Build the Dashboard ---
 if df is not None and not df.empty:
 
     # --- 1. Main Title & KPIs ---
@@ -82,17 +103,16 @@ if df is not None and not df.empty:
             y="ROI",
             color="genres",  # Color-code by genre
             size="revenue"  # Make bigger revenue bubbles larger
-            # Removed 'tooltip' argument to fix the TypeError
         )
         st.caption("Does a bigger budget guarantee a better return? This chart helps answer that.")
 
     with chart_cols[1]:
         st.subheader("Which Genres Are Most Profitable?")
         
-        # We must "explode" the genres column to analyze them individually
-        # 'Action, Sci-Fi' -> row 1: 'Action', row 2: 'Sci-Fi'
         try:
+            # Create a "long" dataframe by exploding the genres list
             df_genres = df.assign(genre=df['genres'].str.split(', ')).explode('genre')
+            # Calculate mean ROI for each genre
             df_genre_roi = df_genres.groupby('genre')['ROI'].mean().sort_values(ascending=False)
             
             st.bar_chart(df_genre_roi)
@@ -116,7 +136,7 @@ if df is not None and not df.empty:
         
         with detail_cols[0]:
             if row['poster_url']:
-                st.image(row['poster_url'], caption="Poster")
+                st.image(row['poster_url'], caption="Poster", use_column_width="auto")
 
         with detail_cols[1]:
             st.markdown(f"**ROI: {row['ROI']:.1%}**")
@@ -128,11 +148,11 @@ if df is not None and not df.empty:
         with detail_cols[2]:
             st.markdown("**Top 3 Cast**")
             if row['actor_1_name']:
-                st.image(row['actor_1_image_url'], caption=row['actor_1_name'], width=100)
+                st.image(row['actor_1_image_url'], caption=row['actor_1_name'], use_column_width="auto")
             if row['actor_2_name']:
-                st.image(row['actor_2_image_url'], caption=row['actor_2_name'], width=100)
+                st.image(row['actor_2_image_url'], caption=row['actor_2_name'], use_column_width="auto")
             if row['actor_3_name']:
-                st.image(row['actor_3_image_url'], caption=row['actor_3_name'], width=100)
+                st.image(row['actor_3_image_url'], caption=row['actor_3_name'], use_column_width="auto")
         
         st.divider()
 
@@ -141,8 +161,7 @@ if df is not None and not df.empty:
         st.dataframe(df)
 
 else:
-    # This message shows if the CSV file hasn't been created yet
-    st.info("Waiting for data...")
-    st.image("https://placehold.co/1200x400/f8f8f8/c0c0c0?text=Run+Your+Airflow+DAG+to+See+Data+Here", use_column_width=True)
-
+    # This message shows if data loading failed
+    st.error("Could not load data from S3.")
+    st.info("Please ensure AWS credentials are set in Streamlit Secrets and the bucket/file key are correct.")
 
