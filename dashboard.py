@@ -156,13 +156,21 @@ if df is not None and not df.empty:
         
         st.divider()
 
-    # --- 4. The "Raw Data" - Full Data Table ---
-    with st.expander("Explore All Processed Data"):
-        st.dataframe(df)
+    # --- 4. The "Raw Data" - Full Data Table (UPDATED) ---
+    with st.expander("Explore All Movie ROI Rankings"):
+        # Select, sort, and reset index
+        df_table = df[['title', 'ROI']].sort_values("ROI", ascending=False)
+        
+        # Format the ROI column to look like a percentage
+        df_table['ROI'] = df_table['ROI'].map('{:,.1%}'.format)
+        
+        # Hide the index for a cleaner look
+        st.dataframe(df_table, use_container_width=True, hide_index=True)
 
 else:
     # This message shows if data loading failed
     st.error("Could not load data from S3.")
     st.info("Please ensure AWS credentials are set in Streamlit Secrets and the bucket/file key are correct.")
+
 
 
