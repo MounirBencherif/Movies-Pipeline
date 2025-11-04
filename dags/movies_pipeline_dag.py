@@ -19,16 +19,13 @@ with DAG(
 
     task_extract = BashOperator(
         task_id="extract_raw_data",
-        # We run our tested Python script using its full path
         bash_command=f"python {SCRIPT_PATH}/extract.py",
     )
 
     task_transform = BashOperator(
         task_id="transform_clean_data",
-        # Run the transformation script
         bash_command=f"python {SCRIPT_PATH}/transform.py",
     )
 
     # --- 3. Set the Task Dependencies ---
-    # This line means: "Only run task_transform *after* task_extract succeeds"
     task_extract >> task_transform
