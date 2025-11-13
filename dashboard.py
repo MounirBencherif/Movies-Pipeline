@@ -147,9 +147,6 @@ if df is not None and not df.empty:
         with detail_cols[2]:
             st.markdown("**Top 3 Cast**")
             
-            # --- THIS IS THE FIX ---
-            # Check if the actor name AND the image URL are valid
-            
             if row['actor_1_name'] and pd.notnull(row['actor_1_image_url']):
                 st.image(row['actor_1_image_url'], caption=row['actor_1_name'], use_container_width=True)
             elif row['actor_1_name']:
@@ -183,6 +180,7 @@ else:
     # This message shows if data loading failed
     st.error("Could not load data from S3.")
     st.info("Please ensure AWS credentials are set in Streamlit Secrets and the bucket/file key are correct.")
+
 
 
 
