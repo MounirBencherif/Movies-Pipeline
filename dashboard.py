@@ -146,13 +146,26 @@ if df is not None and not df.empty:
 
         with detail_cols[2]:
             st.markdown("**Top 3 Cast**")
-            if row['actor_1_name']:
-                st.image(row['actor_1_image_url'], caption=row['actor_1_name'], use_column_width="auto")
-            if row['actor_2_name']:
-                st.image(row['actor_2_image_url'], caption=row['actor_2_name'], use_column_width="auto")
-            if row['actor_3_name']:
-                st.image(row['actor_3_image_url'], caption=row['actor_3_name'], use_column_width="auto")
-        
+            
+            # --- THIS IS THE FIX ---
+            # Check if the actor name AND the image URL are valid
+            
+            if row['actor_1_name'] and pd.notnull(row['actor_1_image_url']):
+                st.image(row['actor_1_image_url'], caption=row['actor_1_name'], use_container_width=True)
+            elif row['actor_1_name']:
+                st.caption(row['actor_1_name'] + " (No image)")
+                
+            if row['actor_2_name'] and pd.notnull(row['actor_2_image_url']):
+                st.image(row['actor_2_image_url'], caption=row['actor_2_name'], use_container_width=True)
+            elif row['actor_2_name']:
+                st.caption(row['actor_2_name'] + " (No image)")
+
+            if row['actor_3_name'] and pd.notnull(row['actor_3_image_url']):
+                st.image(row['actor_3_image_url'], caption=row['actor_3_name'], use_container_width=True)
+            elif row['actor_3_name']:
+                st.caption(row['actor_3_name'] + " (No image)")
+            # --- END OF FIX ---
+
         st.divider()
 
     # --- 4. The "Raw Data" - Full Data Table ---
@@ -170,6 +183,7 @@ else:
     # This message shows if data loading failed
     st.error("Could not load data from S3.")
     st.info("Please ensure AWS credentials are set in Streamlit Secrets and the bucket/file key are correct.")
+
 
 
 
